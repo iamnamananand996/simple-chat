@@ -1,3 +1,5 @@
+#![allow(clippy::collapsible_match)]
+
 use chat_server::protocol::{ClientMessage, ServerMessage};
 use chat_server::websocket::run_chat_server;
 use futures_util::{SinkExt, StreamExt};

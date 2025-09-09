@@ -136,7 +136,7 @@ fn latency_benchmark(c: &mut Criterion) {
                 ws_sender1.send(Message::Text(json)).await.unwrap();
 
                 // Read the broadcast on receiver
-                ws_receiver2.next().await.unwrap();
+                let _ = ws_receiver2.next().await.unwrap();
 
                 server_handle.abort();
             })

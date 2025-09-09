@@ -1,0 +1,59 @@
+#!/bin/bash
+
+# Pre-commit hook for simple-chat project
+# Ensures code is formatted, compiles without error, and passes clippy checks
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# Check if cargo is available
+if ! command -v cargo &> /dev/null; then
+    echo "Error: cargo is not installed or not in PATH"
+    exit 1
+fi
+
+# 1. Check code formatting
+echo "Checking code formatting..."
+if ! cargo fmt --check; then
+    echo "Code formatting check failed!"
+    echo "Run 'cargo fmt' to fix formatting issues"
+    exit 1
+fi
+echo "Code formatting check passed"
+
+# 2. Check that code compiles without errors
+echo "Checking compilation..."
+if ! cargo check --all-targets --all-features; then
+    echo "Compilation check failed!"
+    echo "Fix compilation errors before committing"
+    exit 1
+fi
+echo "Compilation check passed"
+
+# 3. Run clippy checks (allow warnings for tests, deny for main code)
+echo "Running clippy checks..."
+# Check main code with stricter rules
+if ! cargo clippy --lib --bins -- --deny warnings; then
+    echo "Clippy check failed for main code!"
+    echo "Fix clippy warnings in main code before committing"
+    echo "Run 'cargo clippy --fix' to auto-fix some issues"
+    exit 1
+fi
+
+# Check tests with warnings allowed (but still show them)
+echo "Running clippy on tests (warnings allowed)..."
+cargo clippy --tests --benches --examples
+echo "Clippy check passed"
+
+# 4. Run tests to ensure functionality
+echo "🧪 Running tests..."
+if ! cargo test; then
+    echo "Tests failed!"
+    echo "Fix failing tests before committing"
+    exit 1
+fi
+echo "All tests passed"
+
+echo "🎉 All pre-commit checks passed! Ready to commit."
+exit 0
