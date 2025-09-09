@@ -1,9 +1,9 @@
 use chat_server::protocol::{ClientMessage, ServerMessage};
 use chat_server::websocket::run_chat_server;
+use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;
 use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use futures_util::{SinkExt, StreamExt};
 
 #[tokio::test]
 async fn test_websocket_connection() {
@@ -18,7 +18,7 @@ async fn test_websocket_connection() {
     tokio::time::sleep(Duration::from_millis(100)).await;
 
     // Connect with WebSocket
-    let ws_url = format!("ws://{}", addr);
+    let ws_url = format!("ws://{addr}");
     let (ws_stream, _) = connect_async(ws_url).await.unwrap();
     let (mut ws_sender, mut ws_receiver) = ws_stream.split();
 
@@ -37,7 +37,7 @@ async fn test_websocket_connection() {
                 ServerMessage::JoinSuccess { .. } => {
                     println!("Successfully joined chat room");
                 }
-                _ => panic!("Expected JoinSuccess, got: {:?}", server_msg),
+                _ => panic!("Expected JoinSuccess, got: {server_msg:?}"),
             }
         }
     }
@@ -75,13 +75,13 @@ async fn test_multiple_websocket_connections() {
     for client_id in 0..NUM_CLIENTS {
         let handle = tokio::spawn(async move {
             // Connect with WebSocket
-            let ws_url = format!("ws://{}", addr);
+            let ws_url = format!("ws://{addr}");
             if let Ok((ws_stream, _)) = connect_async(ws_url).await {
                 let (mut ws_sender, mut ws_receiver) = ws_stream.split();
 
                 // Join the server
                 let join_msg = ClientMessage::Join {
-                    username: format!("user_{}", client_id),
+                    username: format!("user_{client_id}"),
                 };
                 let json = join_msg.to_json().unwrap();
                 let _ = ws_sender.send(Message::Text(json)).await;
@@ -90,7 +90,7 @@ async fn test_multiple_websocket_connections() {
                 if let Ok(Some(Ok(_))) = timeout(Duration::from_secs(2), ws_receiver.next()).await {
                     // Send a message
                     let send_msg = ClientMessage::SendMessage {
-                        content: format!("Hello from user {}", client_id),
+                        content: format!("Hello from user {client_id}"),
                     };
                     let json = send_msg.to_json().unwrap();
                     let _ = ws_sender.send(Message::Text(json)).await;
@@ -122,9 +122,7 @@ async fn test_multiple_websocket_connections() {
     // Assert that most connections were successful
     assert!(
         successful_connections >= NUM_CLIENTS / 2,
-        "Only {} out of {} connections successful",
-        successful_connections,
-        NUM_CLIENTS
+        "Only {successful_connections} out of {NUM_CLIENTS} connections successful"
     );
 
     server_handle.abort();

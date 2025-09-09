@@ -1,10 +1,10 @@
 use chat_server::protocol::ClientMessage;
 use chat_server::websocket::run_chat_server;
 use criterion::{criterion_group, criterion_main, Criterion};
+use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;
 use tokio::time::timeout;
 use tokio_tungstenite::{connect_async, tungstenite::Message};
-use futures_util::{SinkExt, StreamExt};
 
 async fn setup_server(addr: &str) -> tokio::task::JoinHandle<()> {
     let addr = addr.to_string();
@@ -28,13 +28,13 @@ async fn send_messages_benchmark(num_clients: usize, messages_per_client: usize)
 
     for client_id in 0..num_clients {
         let handle = tokio::spawn(async move {
-            let ws_url = format!("ws://{}", addr);
+            let ws_url = format!("ws://{addr}");
             if let Ok((ws_stream, _)) = connect_async(ws_url).await {
                 let (mut ws_sender, mut ws_receiver) = ws_stream.split();
 
                 // Join the server
                 let join_msg = ClientMessage::Join {
-                    username: format!("bench_user_{}", client_id),
+                    username: format!("bench_user_{client_id}"),
                 };
                 let json = join_msg.to_json().unwrap();
                 let _ = ws_sender.send(Message::Text(json)).await;
@@ -44,7 +44,7 @@ async fn send_messages_benchmark(num_clients: usize, messages_per_client: usize)
                     // Send messages rapidly
                     for msg_id in 0..messages_per_client {
                         let message = ClientMessage::SendMessage {
-                            content: format!("Bench message {} from user {}", msg_id, client_id),
+                            content: format!("Bench message {msg_id} from user {client_id}"),
                         };
                         let json = message.to_json().unwrap();
                         let _ = ws_sender.send(Message::Text(json)).await;
@@ -80,12 +80,9 @@ fn throughput_benchmark(c: &mut Criterion) {
     for &(clients, messages) in &[(10, 10), (50, 20), (100, 10)] {
         let total_messages = clients * messages;
 
-        group.bench_function(
-            &format!("{}_clients_{}_msgs_each", clients, messages),
-            |b| {
-                b.iter(|| rt.block_on(async { send_messages_benchmark(clients, messages).await }));
-            },
-        );
+        group.bench_function(format!("{clients}_clients_{messages}_msgs_each"), |b| {
+            b.iter(|| rt.block_on(async { send_messages_benchmark(clients, messages).await }));
+        });
 
         group.throughput(criterion::Throughput::Elements(total_messages as u64));
     }
@@ -103,16 +100,18 @@ fn latency_benchmark(c: &mut Criterion) {
                 let server_handle = setup_server(addr).await;
 
                 // Connect two clients with WebSocket
-                let ws_url = format!("ws://{}", addr);
-                
+                let ws_url = format!("ws://{addr}");
+
                 let (ws_stream1, _) = connect_async(&ws_url).await.unwrap();
                 let (mut ws_sender1, mut ws_receiver1) = ws_stream1.split();
-                
+
                 let (ws_stream2, _) = connect_async(&ws_url).await.unwrap();
                 let (mut ws_sender2, mut ws_receiver2) = ws_stream2.split();
 
                 // Join both clients
-                for (ws_sender, username) in [(&mut ws_sender1, "sender"), (&mut ws_sender2, "receiver")] {
+                for (ws_sender, username) in
+                    [(&mut ws_sender1, "sender"), (&mut ws_sender2, "receiver")]
+                {
                     let join_msg = ClientMessage::Join {
                         username: username.to_string(),
                     };

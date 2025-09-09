@@ -9,33 +9,31 @@
 // Run specific test file: cargo test --test integration_tests
 // Run with output: cargo test -- --nocapture
 
-use chat_server::websocket::run_chat_server;
-
 #[tokio::test]
 async fn test_functional_approach() {
     // Test that we can create user stores and handle basic operations
-    use chat_server::users::{create_user_stores, add_user, get_user};
-    
+    use chat_server::users::{add_user, create_user_stores, get_user};
+
     let (users, usernames) = create_user_stores();
-    
+
     // Test adding a user
     let user_id = add_user(&users, &usernames, "test_user".to_string()).unwrap();
-    
+
     // Test getting the user
     let user = get_user(&users, user_id).unwrap();
     assert_eq!(user.username, "test_user");
 }
 
-#[tokio::test] 
+#[tokio::test]
 async fn test_duplicate_username() {
     // Test that duplicate usernames are rejected
-    use chat_server::users::{create_user_stores, add_user};
-    
+    use chat_server::users::{add_user, create_user_stores};
+
     let (users, usernames) = create_user_stores();
-    
+
     // Add first user
     add_user(&users, &usernames, "duplicate".to_string()).unwrap();
-    
+
     // Try to add second user with same name - should fail
     let result = add_user(&users, &usernames, "duplicate".to_string());
     assert!(result.is_err());
