@@ -84,7 +84,7 @@ jobs:
 
     - name: Test server resilience
       run: |
-        echo "🛡️ Testing server resilience with edge cases..."
+        echo "Testing server resilience with edge cases..."
         
         # Start server
         ./target/release/chat-server &
@@ -102,7 +102,7 @@ jobs:
         sleep 3
         
         # Test rapid connections and disconnections
-        echo "⚡ Testing rapid connections..."
+        echo "Testing rapid connections..."
         for i in {1..5}; do
             echo "send Quick test $i" | timeout 5 ./target/release/chat-client --host 127.0.0.1 --port 8080 --username "stress-test-$i" > /dev/null 2>&1 &
         done
@@ -112,11 +112,11 @@ jobs:
         
         # Verify server is still alive
         if ! kill -0 $SERVER_PID 2>/dev/null; then
-            echo "❌ Server crashed during stress test"
+            echo "Server crashed during stress test"
             exit 1
         fi
         
-        echo "✅ Server resilience test passed!"
+        echo "Server resilience test passed!"
 
   benchmark:
     name: Performance Benchmark
@@ -145,16 +145,16 @@ jobs:
 
     - name: Run benchmarks
       run: |
-        echo "📊 Running performance benchmarks..."
+        echo "Running performance benchmarks..."
         cd chat-server
         cargo bench --verbose
         
         # Check if criterion results were generated (they go to workspace target dir)
         if [ -d "../target/criterion" ]; then
-          echo "✅ Benchmark results generated successfully"
+          echo "Benchmark results generated successfully"
           ls -la ../target/criterion/
         else
-          echo "⚠️ No benchmark results found"
+          echo "No benchmark results found"
           exit 1
         fi
         
@@ -169,7 +169,7 @@ jobs:
     - name: Create benchmark report and comment on PR
       if: success() && github.event_name == 'pull_request'
       run: |
-        echo "📊 Creating downloadable benchmark report for PR..."
+        echo "Creating downloadable benchmark report for PR..."
         
         # Create a compressed benchmark report
         cd target/criterion
@@ -179,16 +179,16 @@ jobs:
         # Extract some key metrics for the comment
         THROUGHPUT_SUMMARY=""
         if [ -f "target/criterion/chat_server_throughput/report/index.html" ]; then
-          THROUGHPUT_SUMMARY="✅ Throughput benchmarks completed"
+          THROUGHPUT_SUMMARY="Throughput benchmarks completed"
         else
-          THROUGHPUT_SUMMARY="⚠️ Throughput benchmarks may have issues"
+          THROUGHPUT_SUMMARY="Throughput benchmarks may have issues"
         fi
         
         LATENCY_SUMMARY=""
         if [ -f "target/criterion/message_latency/report/index.html" ]; then
-          LATENCY_SUMMARY="✅ Latency benchmarks completed"
+          LATENCY_SUMMARY="Latency benchmarks completed"
         else
-          LATENCY_SUMMARY="⚠️ Latency benchmarks may have issues"
+          LATENCY_SUMMARY="Latency benchmarks may have issues"
         fi
         
         # Upload the benchmark file to a temporary location and get download URL
@@ -196,15 +196,15 @@ jobs:
         
         # Create PR comment with file reference
         cat > benchmark_summary.md << EOF
-        ## 📊 Performance Benchmark Results
+        ## Performance Benchmark Results
         
-        The performance benchmarks have completed successfully! 🎉
+        The performance benchmarks have completed successfully!
         
         ### Test Results Summary
         - **Throughput Tests**: $THROUGHPUT_SUMMARY
         - **Latency Tests**: $LATENCY_SUMMARY
         
-        ### 📁 Download Benchmark Report
+        ### Download Benchmark Report
         
         **Method 1: Workflow Artifact**
         1. Go to the [Actions tab](../actions/runs/${{ github.run_id }})
@@ -215,13 +215,13 @@ jobs:
         
         ### Benchmark Details
         The report includes:
-        - 📈 Interactive performance charts
-        - 📊 Detailed timing measurements  
-        - 🔍 Statistical analysis of results
-        - 📋 Comparison with previous runs
+        - Interactive performance charts
+        - Detailed timing measurements  
+        - Statistical analysis of results
+        - Comparison with previous runs
         
         ---
-        🤖 *Automated benchmark report for commit \`${{ github.sha }}\`*
+        *Automated benchmark report for commit \`${{ github.sha }}\`*
         EOF
         
         # Post comment to PR using GitHub CLI
