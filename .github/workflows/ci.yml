@@ -207,7 +207,7 @@ jobs:
         ### 📁 Download Benchmark Report
         
         **Method 1: Workflow Artifact**
-        1. Go to the [Actions tab](../../../actions/runs/${{ github.run_id }})
+        1. Go to the [Actions tab](../actions/runs/${{ github.run_id }})
         2. Download the "benchmark-results" artifact
         
         **Method 2: PR-Specific Report**
