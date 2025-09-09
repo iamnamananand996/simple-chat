@@ -122,7 +122,6 @@ jobs:
     name: Performance Benchmark
     runs-on: ubuntu-latest
     needs: test
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     
     steps:
     - name: Checkout code
