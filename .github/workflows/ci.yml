@@ -147,10 +147,97 @@ jobs:
       run: |
         echo "📊 Running performance benchmarks..."
         cd chat-server
-        cargo bench
+        cargo bench --verbose
+        
+        # Check if criterion results were generated (they go to workspace target dir)
+        if [ -d "../target/criterion" ]; then
+          echo "✅ Benchmark results generated successfully"
+          ls -la ../target/criterion/
+        else
+          echo "⚠️ No benchmark results found"
+          exit 1
+        fi
         
     - name: Upload benchmark results
       uses: actions/upload-artifact@v4
+      if: success()
       with:
         name: benchmark-results
-        path: chat-server/target/criterion/
+        path: target/criterion/
+        if-no-files-found: error
+
+    - name: Create benchmark report and comment on PR
+      if: success() && github.event_name == 'pull_request'
+      run: |
+        echo "📊 Creating downloadable benchmark report for PR..."
+        
+        # Create a compressed benchmark report
+        cd target/criterion
+        zip -r ../../benchmark-report-${{ github.sha }}.zip . -x "*/.*"
+        cd ../..
+        
+        # Extract some key metrics for the comment
+        THROUGHPUT_SUMMARY=""
+        if [ -f "target/criterion/chat_server_throughput/report/index.html" ]; then
+          THROUGHPUT_SUMMARY="✅ Throughput benchmarks completed"
+        else
+          THROUGHPUT_SUMMARY="⚠️ Throughput benchmarks may have issues"
+        fi
+        
+        LATENCY_SUMMARY=""
+        if [ -f "target/criterion/message_latency/report/index.html" ]; then
+          LATENCY_SUMMARY="✅ Latency benchmarks completed"
+        else
+          LATENCY_SUMMARY="⚠️ Latency benchmarks may have issues"
+        fi
+        
+        # Upload the benchmark file to a temporary location and get download URL
+        # For now, we'll reference the workflow artifact
+        
+        # Create PR comment with file reference
+        cat > benchmark_summary.md << EOF
+        ## 📊 Performance Benchmark Results
+        
+        The performance benchmarks have completed successfully! 🎉
+        
+        ### Test Results Summary
+        - **Throughput Tests**: $THROUGHPUT_SUMMARY
+        - **Latency Tests**: $LATENCY_SUMMARY
+        
+        ### 📁 Download Benchmark Report
+        
+        **Method 1: Workflow Artifact**
+        1. Go to the [Actions tab](../../../actions/runs/${{ github.run_id }})
+        2. Download the "benchmark-results" artifact
+        
+        **Method 2: PR-Specific Report**
+        A dedicated report for this PR is also available as an artifact named "pr-benchmark-report-${{ github.event.number }}"
+        
+        ### Benchmark Details
+        The report includes:
+        - 📈 Interactive performance charts
+        - 📊 Detailed timing measurements  
+        - 🔍 Statistical analysis of results
+        - 📋 Comparison with previous runs
+        
+        ---
+        🤖 *Automated benchmark report for commit \`${{ github.sha }}\`*
+        EOF
+        
+        # Post comment to PR using GitHub CLI
+        if command -v gh >/dev/null 2>&1; then
+          gh pr comment ${{ github.event.number }} --body-file benchmark_summary.md
+        else
+          echo "GitHub CLI not available, benchmark summary:"
+          cat benchmark_summary.md
+        fi
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Upload PR-specific benchmark report
+      if: success() && github.event_name == 'pull_request'
+      uses: actions/upload-artifact@v4
+      with:
+        name: pr-benchmark-report-${{ github.event.number }}
+        path: target/criterion/
+        if-no-files-found: warn
