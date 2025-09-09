@@ -68,4 +68,4 @@ without error, and is free of clippy errors.
 * Create a GitHub Action that will launch your chat server and attempt to 
 send a message to the server from the client. Make sure that niether the server
 or client exit with a failure. This action should be run anytime new code
-is pushed to a branch or landed on the main branch.
+is pushed to a branch or landed on the main branch
