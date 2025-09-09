@@ -64,8 +64,8 @@ cargo test
 # Default: localhost:8080
 cargo run --bin chat-server
 
-# Custom host/port
-cargo run --bin chat-server -- --host 0.0.0.0 --port 3000
+# Custom address
+cargo run --bin chat-server -- --addr 0.0.0.0:3000
 ```
 
 #### 2. Connect Clients
@@ -75,7 +75,7 @@ cargo run --bin chat-server -- --host 0.0.0.0 --port 3000
 cargo run --bin chat-client -- --username alice
 
 # Connect to custom server
-cargo run --bin chat-client -- --host 192.168.1.100 --port 3000 --username bob
+cargo run --bin chat-client -- --host localhost --port 3000 --username bob
 ```
 
 #### 3. Chat Commands
@@ -178,8 +178,7 @@ The benchmark reports include interactive HTML reports with detailed visualizati
 
 | Option | Environment | CLI Flag | Default | Description |
 |--------|-------------|----------|---------|-------------|
-| Host | `CHAT_HOST` | `--host` | `127.0.0.1` | Server bind address |
-| Port | `CHAT_PORT` | `--port` | `8080` | Server port |
+| Address | - | `--addr` | `127.0.0.1:8080` | Server bind address (host:port) |
 
 ### Client Configuration
 
