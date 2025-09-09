@@ -24,7 +24,7 @@ jobs:
         components: rustfmt, clippy
 
     - name: Cache Cargo dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/bin/
@@ -64,7 +64,7 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
 
     - name: Cache Cargo dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/bin/
@@ -131,7 +131,7 @@ jobs:
       uses: dtolnay/rust-toolchain@stable
 
     - name: Cache Cargo dependencies
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       with:
         path: |
           ~/.cargo/bin/
@@ -150,7 +150,7 @@ jobs:
         cargo bench
         
     - name: Upload benchmark results
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: benchmark-results
         path: chat-server/target/criterion/
