@@ -1,7 +1,9 @@
-mod server;
+mod messages;
+mod users;
+mod websocket;
 
 use clap::Parser;
-use server::ChatServer;
+use websocket::run_chat_server;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Chat Server", long_about = None)]
@@ -13,11 +15,6 @@ struct Args {
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-    
-    println!("Starting chat server");
-
-    let server = ChatServer::new();
-    server.run(&args.addr).await?;
-    
+    run_chat_server(&args.addr).await?;
     Ok(())
 }

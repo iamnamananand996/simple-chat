@@ -1,19 +1,15 @@
-mod client;
+mod websocket;
 
 use clap::Parser;
-use client::{Args, ChatClient};
+use websocket::{run_chat_client, Args};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let args = Args::parse();
-
     println!(
         "Connecting to chat server at {}:{}...",
         args.host, args.port
     );
-
-    let client = ChatClient::new(args);
-    client.run().await?;
-
+    run_chat_client(args).await?;
     Ok(())
 }
