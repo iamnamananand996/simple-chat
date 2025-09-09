@@ -10,12 +10,26 @@ pub enum ClientMessage {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum ServerMessage {
-    JoinSuccess { user_id: Uuid },
-    JoinError { error: String },
-    UserJoined { username: String },
-    UserLeft { username: String },
-    Message { username: String, content: String },
-    Error { error: String },
+    JoinSuccess {
+        user_id: Uuid,
+    },
+    JoinError {
+        error: String,
+    },
+    UserJoined {
+        username: String,
+    },
+    UserLeft {
+        username: String,
+    },
+    Message {
+        username: String,
+        content: String,
+        sender_id: Uuid,
+    },
+    Error {
+        error: String,
+    },
 }
 
 impl ClientMessage {

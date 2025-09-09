@@ -43,7 +43,7 @@ async fn handle_websocket_client(
     let websocket = accept_async(stream).await?;
     let (ws_sender, ws_receiver) = websocket.split();
 
-    let mut user_id: Option<Uuid> = None;
+    let user_id = Arc::new(tokio::sync::Mutex::new(None::<Uuid>));
     let broadcast_rx = broadcast_tx.subscribe();
 
     // Use channels to coordinate between the two tasks
@@ -73,9 +73,19 @@ async fn handle_websocket_client(
     // Spawn task to handle broadcast messages
     let broadcast_sender = outgoing_tx.clone();
     let mut broadcast_rx = broadcast_rx;
+    let user_id_clone = Arc::clone(&user_id);
     tokio::spawn(async move {
         while let Ok(server_msg) = broadcast_rx.recv().await {
-            if broadcast_sender.send(server_msg).is_err() {
+            // Filter out messages sent by this user (don't echo back to sender)
+            let should_send = match &server_msg {
+                ServerMessage::Message { sender_id, .. } => {
+                    let current_user_id = user_id_clone.lock().await;
+                    current_user_id.map(|uid| uid != *sender_id).unwrap_or(true)
+                }
+                _ => true, // Send all other message types
+            };
+
+            if should_send && broadcast_sender.send(server_msg).is_err() {
                 break; // Receiver dropped
             }
         }
@@ -87,23 +97,25 @@ async fn handle_websocket_client(
     let usernames_clone = Arc::clone(&usernames);
     let broadcast_tx_clone = broadcast_tx.clone();
 
+    let user_id_for_incoming = Arc::clone(&user_id);
     let incoming_task = tokio::spawn(async move {
         while let Some(msg) = ws_receiver.next().await {
             match msg {
                 Ok(Message::Text(text)) => {
                     if let Ok(client_msg) = ClientMessage::from_json(&text) {
+                        let current_user_id = *user_id_for_incoming.lock().await;
                         if let Some(response) = handle_message(
                             &users_clone,
                             &usernames_clone,
                             &broadcast_tx_clone,
-                            user_id,
+                            current_user_id,
                             client_msg,
                         )
                         .await
                         {
                             // Handle special case for join success to store user_id
                             if let ServerMessage::JoinSuccess { user_id: id } = &response {
-                                user_id = Some(*id);
+                                *user_id_for_incoming.lock().await = Some(*id);
                             }
 
                             let _ = outgoing_tx.send(response);
@@ -122,12 +134,13 @@ async fn handle_websocket_client(
         }
 
         // Cleanup on disconnect
-        if user_id.is_some() {
+        let final_user_id = *user_id_for_incoming.lock().await;
+        if final_user_id.is_some() {
             let _ = handle_message(
                 &users_clone,
                 &usernames_clone,
                 &broadcast_tx_clone,
-                user_id,
+                final_user_id,
                 ClientMessage::Leave,
             )
             .await;

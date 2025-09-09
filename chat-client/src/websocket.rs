@@ -60,7 +60,9 @@ pub async fn run_chat_client(args: Args) -> Result<(), Box<dyn std::error::Error
                                         println!("* {username} left the chat");
                                     }
                                 }
-                                ServerMessage::Message { username, content } => {
+                                ServerMessage::Message {
+                                    username, content, ..
+                                } => {
                                     println!("{username}: {content}");
                                 }
                                 ServerMessage::Error { error } => {

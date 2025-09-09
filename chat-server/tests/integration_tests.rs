@@ -67,7 +67,9 @@ async fn test_send_message_functional() {
     // Check broadcast message
     let broadcast_msg = broadcast_rx.recv().await.unwrap();
     match broadcast_msg {
-        ServerMessage::Message { username, content } => {
+        ServerMessage::Message {
+            username, content, ..
+        } => {
             assert_eq!(username, "sender");
             assert_eq!(content, "Hello world!");
         }

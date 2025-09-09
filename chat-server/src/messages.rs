@@ -79,6 +79,7 @@ async fn handle_send_message(
         let message = ServerMessage::Message {
             username: user.username,
             content,
+            sender_id: user_id,
         };
         let _ = broadcast_tx.send(message);
         None // No direct response for successful message send
