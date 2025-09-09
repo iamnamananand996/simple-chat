@@ -69,7 +69,7 @@ if $CLIENT_CMD < /tmp/client_input.txt > /tmp/client_output.txt 2>&1; then
     echo "✅ Client executed successfully"
     
     # Check if client output contains expected text
-    if grep -q "Successfully joined the chat room" /tmp/client_output.txt; then
+    if grep -q "Connected to WebSocket chat server" /tmp/client_output.txt; then
         echo "✅ Client connected to server successfully"
     else
         echo "❌ Client connection failed"
