@@ -1,0 +1,38 @@
+#!/bin/bash
+
+# Pre-commit hook for simple-chat project
+# Ensures code is formatted, compiles without error, and passes clippy checks
+
+set -e
+
+echo "🔍 Running pre-commit checks..."
+
+# 1. Check code formatting
+echo "Checking code formatting..."
+if ! cargo fmt --check; then
+    echo "Code formatting check failed!"
+    echo "Run 'cargo fmt' to fix formatting issues"
+    exit 1
+fi
+echo "Code formatting check passed"
+
+# 2. Check that code compiles without errors
+echo "Checking compilation..."
+if ! cargo check --all-targets --all-features; then
+    echo "Compilation check failed!"
+    echo "Fix compilation errors before committing"
+    exit 1
+fi
+echo "Compilation check passed"
+
+# 3. Run tests to ensure functionality
+echo "🧪 Running tests..."
+if ! cargo test; then
+    echo "Tests failed!"
+    echo "Fix failing tests before committing"
+    exit 1
+fi
+echo "All tests passed"
+
+echo "🎉 All pre-commit checks passed! Ready to commit."
+exit 0

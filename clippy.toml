@@ -1,0 +1,20 @@
+# Clippy configuration for the simple-chat project
+# This file configures clippy linting rules for better code quality
+
+# Cognitive complexity threshold - warns when functions become too complex
+cognitive-complexity-threshold = 30
+
+# Type complexity threshold - warns when types become too nested
+type-complexity-threshold = 250
+
+# Function argument threshold - warns when functions have too many parameters
+too-many-arguments-threshold = 7
+
+# Maximum number of single char bindings allowed
+single-char-binding-names-threshold = 4
+
+# Allow certain lints that are too strict for this project
+avoid-breaking-exported-api = false
+
+# Maximum allowed lines for a single function
+too-many-lines-threshold = 100
